@@ -12,9 +12,7 @@ import argparse
 import json
 from pathlib import Path
 
-from google import genai
-
-from rag import MODELS, Index, answer
+from rag import MODELS, Index, answer, make_client
 
 
 def main():
@@ -24,7 +22,7 @@ def main():
     ap.add_argument("--out", default="report.md")
     args = ap.parse_args()
 
-    index, client = Index(args.index), genai.Client()
+    index, client = Index(args.index), make_client()
     rows = [json.loads(l) for l in Path(args.questions).read_text(encoding="utf-8").splitlines() if l.strip()]
     results = []
     for i, row in enumerate(rows, 1):

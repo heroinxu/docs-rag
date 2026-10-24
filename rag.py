@@ -23,6 +23,13 @@ MODELS = [m.strip() for m in os.environ.get("DOCS_RAG_MODEL", "gemini-3.8-flash,
 MODEL = MODELS[0]
 RETRYABLE = {429, 500, 503, 504}
 SKIP_MODEL = {404}  # model retired for this key: move on to the next one
+TIMEOUT_MS = int(os.environ.get("DOCS_RAG_TIMEOUT_MS", "40000"))
+
+
+def make_client():
+    # One attempt per SDK call with a hard timeout; generate() owns retries and model fallback.
+    # (The SDK default is 5 attempts with backoff and no timeout, which can hang for many minutes.)
+    return genai.Client(http_options=types.HttpOptions(timeout=TIMEOUT_MS, retry_options=types.HttpRetryOptions(attempts=1)))
 TOP_K = int(os.environ.get("DOCS_RAG_TOP_K", "8"))
 NOT_FOUND = "I couldn't find this in the docs."
 
@@ -112,12 +119,17 @@ def generate(client, contents, config):
                 if e.code not in RETRYABLE:
                     raise
                 time.sleep(2 * (attempt + 1))
+            except Exception as e:
+                if "timeout" not in type(e).__name__.lower():
+                    raise
+                last = e
+                break  # slow model: try the next one instead of waiting again
     raise last
 
 
 def answer(index, question, client=None):
     """Return {"answer", "citations", "refused", "unsupported", "sources"}."""
-    client = client or genai.Client()
+    client = client or make_client()
     hits = index.search(question)
     if not hits:
         return {"answer": NOT_FOUND, "citations": [], "refused": True, "unsupported": 0, "sources": []}

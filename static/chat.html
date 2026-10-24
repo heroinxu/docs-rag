@@ -32,10 +32,16 @@
 <script>
 const log = document.getElementById('log'), q = document.getElementById('q');
 function add(text, cls) { const d = document.createElement('div'); d.className = 'msg ' + cls; d.textContent = text; log.appendChild(d); d.scrollIntoView(); return d; }
-document.getElementById('f').onsubmit = async e => {
+document.getElementById('f').onsubmit = e => {
   e.preventDefault();
   const question = q.value.trim(); if (!question) return;
-  q.value = ''; add(question, 'user');
+  q.value = ''; ask(question);
+};
+// Shareable demo links: /?q=How+do+I... asks the question on load.
+const preset = new URLSearchParams(location.search).get('q');
+if (preset) ask(preset);
+async function ask(question) {
+  add(question, 'user');
   const box = add('Searching the docs...', 'bot');
   try {
     const r = await fetch('/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question }) });
@@ -47,7 +53,7 @@ document.getElementById('f').onsubmit = async e => {
       box.appendChild(c);
     }
   } catch { box.textContent = 'Error contacting the server.'; }
-};
+}
 </script>
 </body>
 </html>
