@@ -73,6 +73,7 @@ See [DEPLOY.md](DEPLOY.md): Render Blueprint (`render.yaml`), any VPS via `serve
 - `app.py` + `static/chat.html`: FastAPI server + minimal chat UI with clickable sources.
 - `static/widget.js`: embeddable chat widget for client websites (CORS + per-IP rate limit on the server).
 - `discord_bot.py`: Discord bot (`/ask` and @mentions) with linked sources; runs inside `serve.py` when `DISCORD_BOT_TOKEN` is set.
+- `slack_bot.py`: Slack bot (`/ask` and @mentions in threads, Socket Mode, no public URL needed); runs inside `serve.py` when `SLACK_BOT_TOKEN` and `SLACK_APP_TOKEN` are set.
 - `qlog.py` + `questions_report.py`: question log (no personal data) and top-questions report (most asked, unanswered = docs gaps, most cited pages); also served at `/admin/questions` behind `DOCS_RAG_ADMIN_TOKEN`.
 - `evaluate.py`: question set to Markdown report.
 
@@ -81,5 +82,4 @@ Settings (env vars): `DOCS_RAG_MODEL` (comma-separated, primary then fallbacks; 
 ## Roadmap
 
 - Embedding-based hybrid retrieval (BM25 + vectors) for paraphrased questions
-- Slack bot front-end
 - Scheduled re-crawl to keep the index in sync

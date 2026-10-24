@@ -7,6 +7,7 @@ Environment:
     DOCS_RAG_REINDEX     "1" to rebuild the index even if it exists
     PORT                 port to listen on (set by Render/Railway; default 8000)
     DISCORD_BOT_TOKEN    optional: also run the Discord bot in the same process
+    SLACK_BOT_TOKEN      optional, with SLACK_APP_TOKEN: also run the Slack bot (Socket Mode)
 
 Usage:
     py serve.py --index-only   # build step: crawl and index, then exit
@@ -44,7 +45,23 @@ async def run(port):
     token = os.environ.get("DISCORD_BOT_TOKEN")
     if token:
         jobs.append(run_bot(index, PRODUCT, token))
+    slack_bot, slack_app = os.environ.get("SLACK_BOT_TOKEN"), os.environ.get("SLACK_APP_TOKEN")
+    if slack_bot and slack_app:
+        jobs.append(run_slack(index, PRODUCT, slack_bot, slack_app))
+    elif slack_bot or slack_app:
+        print("Slack bot not started: set both SLACK_BOT_TOKEN and SLACK_APP_TOKEN.")
     await asyncio.gather(*jobs)
+
+
+async def run_slack(index, product, bot_token, app_token):
+    # Same isolation as Discord: a Slack failure must not stop the website widget.
+    from slack_bot import SlackDocsBot
+
+    try:
+        await SlackDocsBot(index, product, bot_token, app_token).start()
+    except Exception as e:
+        detail = getattr(getattr(e, "response", None), "data", None) or e  # SlackApiError carries {"error": "invalid_auth"}
+        print(f"Slack bot stopped: {type(e).__name__}: {detail}. The web server keeps running.")
 
 
 async def run_bot(index, product, token):

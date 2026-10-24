@@ -4,3 +4,5 @@ beautifulsoup4>=4.12
 fastapi>=0.110
 uvicorn>=0.29
 discord.py>=2.3
+slack_bolt>=1.18
+aiohttp>=3.9

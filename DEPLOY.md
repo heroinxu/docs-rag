@@ -78,6 +78,46 @@ If the token is wrong, the log shows `Discord bot stopped: LoginFailure ...`, an
 
 Bot settings: `DISCORD_RATE_LIMIT` (questions per user per minute, default 5) and `DISCORD_EMBED_COLOR` (hex without `#`, default `2563eb`).
 
+## Slack bot (Premium)
+
+The bot runs in the same service as the website widget and uses Socket Mode, so Slack needs no public URL for it. Users ask with `/ask How do I...` (answer posted in the channel) or `@Docs Assistant how do I...` (answer posted in a thread). Answers include linked sources.
+
+**Steps (done by the client, or by you with their Slack admin's approval):**
+
+1. Go to api.slack.com/apps, click **Create New App**, then **From an app manifest**, and pick the workspace. Paste:
+   ```yaml
+   display_information:
+     name: Docs Assistant
+   features:
+     bot_user:
+       display_name: Docs Assistant
+       always_online: true
+     slash_commands:
+       - command: /ask
+         description: Ask a question about the docs
+         usage_hint: How do I get started?
+         should_escape: false
+   oauth_config:
+     scopes:
+       bot:
+         - app_mentions:read
+         - chat:write
+         - commands
+   settings:
+     event_subscriptions:
+       bot_events:
+         - app_mention
+     socket_mode_enabled: true
+   ```
+2. Go to **Basic Information**, then **App-Level Tokens**, then **Generate Token and Scopes**. Add the scope `connections:write` and copy the `xapp-...` token.
+3. Go to **Install App**, then **Install to Workspace**. Copy the **Bot User OAuth Token** (`xoxb-...`).
+4. In Render, open the service's **Environment** and add `SLACK_BOT_TOKEN` (xoxb) and `SLACK_APP_TOKEN` (xapp). Save; the service restarts.
+5. Check the log for `Slack bot online as ...`. For @mentions, invite the bot to each channel with `/invite @Docs Assistant`. `/ask` works anywhere.
+
+If a token is wrong, the log shows `Slack bot stopped: SlackApiError: {... 'invalid_auth'}`, and the website widget keeps working. Both tokens are required; with only one set, the bot doesn't start and the log says so.
+
+Bot setting: `SLACK_RATE_LIMIT` (questions per user per minute, default 5).
+
 ## Top-questions log (Premium)
 
 Every question from the widget and the Discord bot is appended to a log: question text, answered yes/no, cited pages and time. **No IPs, user IDs or names are stored.** The report groups near-duplicate wordings and shows:
@@ -115,6 +155,7 @@ Suggested Premium deliverable: send the client the 30-day report each month, wit
 | `DOCS_RAG_LOG` | `logs/questions.jsonl` | Question log path (`off` disables logging) |
 | `DOCS_RAG_ADMIN_TOKEN` | (unset, endpoint off) | Enables `/admin/questions` |
 | `DISCORD_BOT_TOKEN` | (unset, bot off) | Runs the Discord bot in the same service |
+| `SLACK_BOT_TOKEN` + `SLACK_APP_TOKEN` | (unset, bot off) | Runs the Slack bot (Socket Mode) in the same service |
 
 ## Troubleshooting
 
