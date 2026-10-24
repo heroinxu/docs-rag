@@ -62,6 +62,10 @@ Server settings: `DOCS_RAG_ALLOWED_ORIGINS` (comma-separated sites allowed to ca
 
 Runs real questions through the engine and saves a static chat page (no server needed) that you can screenshot or send.
 
+## Deploying for a client
+
+See [DEPLOY.md](DEPLOY.md): Render Blueprint (`render.yaml`), any VPS via `serve.py`, widget install, settings and the handover checklist.
+
 ## How it works
 
 - `ingest.py`: crawl, strip nav/footers, split by headings into chunks of at most 2,400 characters.

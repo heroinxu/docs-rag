@@ -1,0 +1,25 @@
+# Render Blueprint: one docs assistant per client.
+# Render dashboard -> New -> Blueprint -> pick this repo (or the client's fork).
+# Values marked "sync: false" are asked for on first deploy and never stored in git.
+services:
+  - type: web
+    name: docs-rag
+    runtime: python
+    # Indexing runs at build time, so restarts and sleeps don't re-crawl the docs.
+    # DOCS_RAG_REINDEX=1 only here, so every deploy re-crawls but the start step never does.
+    buildCommand: pip install -r requirements.txt && DOCS_RAG_REINDEX=1 python serve.py --index-only
+    startCommand: python serve.py
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.13.7
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: DOCS_RAG_DOCS_URL
+        sync: false
+      - key: DOCS_RAG_PRODUCT
+        sync: false
+      - key: DOCS_RAG_ALLOWED_ORIGINS
+        sync: false
+      - key: DOCS_RAG_MAX_PAGES
+        value: "150"

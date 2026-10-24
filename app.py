@@ -57,6 +57,11 @@ def home():
     return html.replace("{{PRODUCT}}", PRODUCT)
 
 
+@app.get("/health")
+def health():
+    return {"ok": True, "chunks": len(INDEX.chunks)}
+
+
 @app.get("/widget.js")
 def widget():
     return FileResponse(STATIC / "widget.js", media_type="application/javascript", headers={"Cache-Control": "public, max-age=300"})
