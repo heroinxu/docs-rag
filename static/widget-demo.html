@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Widget Demo</title>
+<style>
+  body { margin: 0; font: 16px/1.6 Georgia, serif; background: #fdfcf8; color: #222; }
+  main { max-width: 720px; margin: 0 auto; padding: 48px 16px; }
+  h1 { font-size: 34px; margin: 0 0 8px; }
+  code { background: #eee; padding: 2px 6px; border-radius: 4px; font-size: 14px; }
+  pre { background: #f0efe9; padding: 14px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Example docs site</h1>
+  <p>This page stands in for a customer's documentation site. It has its own fonts and styles; the chat widget in the corner is isolated in a Shadow DOM so neither affects the other.</p>
+  <p>Embed code used on this page:</p>
+  <pre>&lt;script src="/widget.js" data-title="Ask the uv docs" data-color="#7c3aed" async&gt;&lt;/script&gt;</pre>
+  <p>Click the chat bubble at the bottom right and ask something like <code>How do I use uv in Docker?</code></p>
+</main>
+<script src="/widget.js" data-title="Ask the uv docs" data-color="#7c3aed" async></script>
+</body>
+</html>

@@ -38,7 +38,23 @@ The report counts answerable questions that came back with citations and out-of-
 
 Shareable link that asks a question on load: `http://localhost:8000/?q=How+do+I+install+uv`
 
-## 4. Static demo snapshot
+## 4. Website widget
+
+Add one line to any page of the client's site:
+
+```html
+<script src="https://YOUR-HOST/widget.js" async
+  data-title="Ask the docs"
+  data-greeting="Hi! Ask me anything about our docs."
+  data-color="#2563eb"
+  data-position="right"></script>
+```
+
+A chat bubble appears in the corner. Answers show clickable sources. The widget renders in a Shadow DOM, so it can't clash with the site's CSS, and it goes full screen on phones. Try it at http://localhost:8000/widget-demo.
+
+Server settings: `DOCS_RAG_ALLOWED_ORIGINS` (comma-separated sites allowed to call the API, default `*`; set it to the client's domain in production) and `DOCS_RAG_RATE_LIMIT` (questions per visitor IP per minute, default 10).
+
+## 5. Static demo snapshot
 
 ```
 .venv\Scripts\python snapshot.py indexes/uv.json "uv (Astral)" demo.html "How do I migrate from pip to a uv project?" "What is Astral's annual revenue?"
@@ -51,6 +67,7 @@ Runs real questions through the engine and saves a static chat page (no server n
 - `ingest.py`: crawl, strip nav/footers, split by headings into chunks of at most 2,400 characters.
 - `rag.py`: BM25 keyword retrieval (top 8 chunks), then Gemini with JSON output. For each sentence, Gemini returns the chunk number it used plus a verbatim quote. The code checks every quote against the chunk text, drops citations that don't match, and marks sentences with no verified quote as `[unverified]`. The system prompt forbids outside knowledge and makes it say "I couldn't find this in the docs." when the answer is missing.
 - `app.py` + `static/chat.html`: FastAPI server + minimal chat UI with clickable sources.
+- `static/widget.js`: embeddable chat widget for client websites (CORS + per-IP rate limit on the server).
 - `evaluate.py`: question set to Markdown report.
 
 Settings (env vars): `DOCS_RAG_MODEL` (comma-separated, primary then fallbacks; default `gemini-3.8-flash,gemini-3.5-flash,gemini-flash-latest,gemini-3.5-flash-lite`), `DOCS_RAG_TOP_K` (default 8), `DOCS_RAG_TIMEOUT_MS` (per-request timeout, default 40000). Overloaded, rate-limited, timed-out or retired models fall back to the next one.
@@ -60,4 +77,3 @@ Settings (env vars): `DOCS_RAG_MODEL` (comma-separated, primary then fallbacks; 
 - Embedding-based hybrid retrieval (BM25 + vectors) for paraphrased questions
 - Discord / Slack bot front-ends
 - Scheduled re-crawl to keep the index in sync
-- Embeddable `<script>` widget
