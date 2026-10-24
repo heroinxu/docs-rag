@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docs Assistant Demo</title>
+<style>
+  :root { --bg:#f7f7f8; --card:#fff; --ink:#1a1a1a; --muted:#666; --accent:#2563eb; --line:#e5e5e5; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#111; --card:#1b1b1d; --ink:#eee; --muted:#999; --accent:#60a5fa; --line:#2a2a2a; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.55 system-ui, sans-serif; background:var(--bg); color:var(--ink); }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 120px; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:13px; margin-bottom:20px; }
+  .msg { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin:10px 0; white-space:pre-wrap; }
+  .user { border-color:var(--accent); }
+  .cites { margin-top:10px; font-size:13px; }
+  .cites a { display:block; color:var(--accent); text-decoration:none; margin:3px 0; overflow-wrap:anywhere; }
+  form { position:fixed; bottom:0; left:0; right:0; background:var(--bg); border-top:1px solid var(--line); padding:12px 16px; }
+  .row { max-width:760px; margin:0 auto; display:flex; gap:8px; }
+  input { flex:1; padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:var(--card); color:var(--ink); font:inherit; }
+  button { padding:10px 16px; border:0; border-radius:8px; background:var(--accent); color:#fff; font:inherit; cursor:pointer; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Docs assistant: {{PRODUCT}}</h1>
+  <div class="sub">Unofficial demo, not affiliated. Answers come only from the public docs, with sources.</div>
+  <div id="log"></div>
+</main>
+<form id="f"><div class="row"><input id="q" placeholder="Ask a question about the docs..." autocomplete="off"><button>Ask</button></div></form>
+<script>
+const log = document.getElementById('log'), q = document.getElementById('q');
+function add(text, cls) { const d = document.createElement('div'); d.className = 'msg ' + cls; d.textContent = text; log.appendChild(d); d.scrollIntoView(); return d; }
+document.getElementById('f').onsubmit = async e => {
+  e.preventDefault();
+  const question = q.value.trim(); if (!question) return;
+  q.value = ''; add(question, 'user');
+  const box = add('Searching the docs...', 'bot');
+  try {
+    const r = await fetch('/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question }) });
+    const data = await r.json();
+    box.textContent = data.answer;
+    if (data.citations.length) {
+      const c = document.createElement('div'); c.className = 'cites';
+      data.citations.forEach((x, i) => { const a = document.createElement('a'); a.href = x.url; a.target = '_blank'; a.textContent = `[${i + 1}] ${x.heading}: "${x.quote.slice(0, 90)}..."`; c.appendChild(a); });
+      box.appendChild(c);
+    }
+  } catch { box.textContent = 'Error contacting the server.'; }
+};
+</script>
+</body>
+</html>
