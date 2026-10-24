@@ -58,6 +58,26 @@ Send them this one line. It goes before `</body>`, or in their docs platform's "
 
 Most docs platforms (Docusaurus, Mintlify, GitBook, ReadMe) have a custom-script or custom-HTML setting. Check that platform's own docs for the exact place.
 
+## Discord bot (Premium)
+
+The bot runs in the same service as the website widget and uses the same index. Users ask with `/ask question:...` or by mentioning the bot (`@DocsBot how do I...`). Answers arrive as an embed with linked sources. No privileged intents are needed.
+
+**Steps (done by the client, or by you with their Discord account access):**
+
+1. Go to discord.com/developers/applications, click **New Application** and name it (e.g. "Example Docs").
+2. Open the **Bot** tab and click **Reset Token**. Copy the token; it's shown once. Leave all "Privileged Gateway Intents" **off**.
+3. Invite it to the server. Copy the **Application ID** from **General Information**, then open:
+   ```
+   https://discord.com/oauth2/authorize?client_id=APPLICATION_ID&scope=bot+applications.commands&permissions=84992
+   ```
+   `84992` = View Channels + Send Messages + Embed Links + Read Message History.
+4. In Render, go to the service's **Environment**, add `DISCORD_BOT_TOKEN` = the token, and save. The service restarts.
+5. Check the service log for `Discord bot online as ...`. The `/ask` command can take a few minutes to appear the first time.
+
+If the token is wrong, the log shows `Discord bot stopped: LoginFailure ...`, and the website widget keeps working.
+
+Bot settings: `DISCORD_RATE_LIMIT` (questions per user per minute, default 5) and `DISCORD_EMBED_COLOR` (hex without `#`, default `2563eb`).
+
 ## Settings reference
 
 | Variable | Default | Purpose |

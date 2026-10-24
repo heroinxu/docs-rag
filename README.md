@@ -72,6 +72,7 @@ See [DEPLOY.md](DEPLOY.md): Render Blueprint (`render.yaml`), any VPS via `serve
 - `rag.py`: BM25 keyword retrieval (top 8 chunks), then Gemini with JSON output. For each sentence, Gemini returns the chunk number it used plus a verbatim quote. The code checks every quote against the chunk text, drops citations that don't match, and marks sentences with no verified quote as `[unverified]`. The system prompt forbids outside knowledge and makes it say "I couldn't find this in the docs." when the answer is missing.
 - `app.py` + `static/chat.html`: FastAPI server + minimal chat UI with clickable sources.
 - `static/widget.js`: embeddable chat widget for client websites (CORS + per-IP rate limit on the server).
+- `discord_bot.py`: Discord bot (`/ask` and @mentions) with linked sources; runs inside `serve.py` when `DISCORD_BOT_TOKEN` is set.
 - `evaluate.py`: question set to Markdown report.
 
 Settings (env vars): `DOCS_RAG_MODEL` (comma-separated, primary then fallbacks; default `gemini-3.8-flash,gemini-3.5-flash,gemini-flash-latest,gemini-3.5-flash-lite`), `DOCS_RAG_TOP_K` (default 8), `DOCS_RAG_TIMEOUT_MS` (per-request timeout, default 40000). Overloaded, rate-limited, timed-out or retired models fall back to the next one.
@@ -79,5 +80,5 @@ Settings (env vars): `DOCS_RAG_MODEL` (comma-separated, primary then fallbacks; 
 ## Roadmap
 
 - Embedding-based hybrid retrieval (BM25 + vectors) for paraphrased questions
-- Discord / Slack bot front-ends
+- Slack bot front-end
 - Scheduled re-crawl to keep the index in sync

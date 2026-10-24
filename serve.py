@@ -6,18 +6,21 @@ Environment:
     DOCS_RAG_INDEX       index file path (default indexes/index.json)
     DOCS_RAG_REINDEX     "1" to rebuild the index even if it exists
     PORT                 port to listen on (set by Render/Railway; default 8000)
+    DISCORD_BOT_TOKEN    optional: also run the Discord bot in the same process
 
 Usage:
     py serve.py --index-only   # build step: crawl and index, then exit
     py serve.py                # start step: index if missing, then serve
 """
 
+import asyncio
 import os
 import subprocess
 import sys
 from pathlib import Path
 
 HERE = Path(__file__).parent
+sys.path.insert(0, str(HERE))
 INDEX = Path(os.environ.setdefault("DOCS_RAG_INDEX", str(HERE / "indexes" / "index.json")))
 
 
@@ -32,13 +35,33 @@ def build_index():
     subprocess.run([sys.executable, str(HERE / "ingest.py"), url, "--max-pages", pages, "--out", str(INDEX)], check=True)
 
 
+async def run(port):
+    import uvicorn
+
+    from app import INDEX as index, PRODUCT, app  # imported after build_index so the index exists
+
+    jobs = [uvicorn.Server(uvicorn.Config(app, host="0.0.0.0", port=port)).serve()]
+    token = os.environ.get("DISCORD_BOT_TOKEN")
+    if token:
+        jobs.append(run_bot(index, PRODUCT, token))
+    await asyncio.gather(*jobs)
+
+
+async def run_bot(index, product, token):
+    # A bad token or Discord outage must not take the website widget down with it.
+    from discord_bot import DocsBot
+
+    try:
+        await DocsBot(index, product).start(token)
+    except Exception as e:
+        print(f"Discord bot stopped: {type(e).__name__}: {e}. The web server keeps running.")
+
+
 def main():
     build_index()
     if "--index-only" in sys.argv:
         return
-    import uvicorn
-
-    uvicorn.run("app:app", host="0.0.0.0", port=int(os.environ.get("PORT", "8000")), app_dir=str(HERE))
+    asyncio.run(run(int(os.environ.get("PORT", "8000"))))
 
 
 if __name__ == "__main__":
