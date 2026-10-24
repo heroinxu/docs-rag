@@ -73,6 +73,7 @@ See [DEPLOY.md](DEPLOY.md): Render Blueprint (`render.yaml`), any VPS via `serve
 - `app.py` + `static/chat.html`: FastAPI server + minimal chat UI with clickable sources.
 - `static/widget.js`: embeddable chat widget for client websites (CORS + per-IP rate limit on the server).
 - `discord_bot.py`: Discord bot (`/ask` and @mentions) with linked sources; runs inside `serve.py` when `DISCORD_BOT_TOKEN` is set.
+- `qlog.py` + `questions_report.py`: question log (no personal data) and top-questions report (most asked, unanswered = docs gaps, most cited pages); also served at `/admin/questions` behind `DOCS_RAG_ADMIN_TOKEN`.
 - `evaluate.py`: question set to Markdown report.
 
 Settings (env vars): `DOCS_RAG_MODEL` (comma-separated, primary then fallbacks; default `gemini-3.8-flash,gemini-3.5-flash,gemini-flash-latest,gemini-3.5-flash-lite`), `DOCS_RAG_TOP_K` (default 8), `DOCS_RAG_TIMEOUT_MS` (per-request timeout, default 40000). Overloaded, rate-limited, timed-out or retired models fall back to the next one.

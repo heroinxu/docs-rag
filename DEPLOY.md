@@ -78,6 +78,27 @@ If the token is wrong, the log shows `Discord bot stopped: LoginFailure ...`, an
 
 Bot settings: `DISCORD_RATE_LIMIT` (questions per user per minute, default 5) and `DISCORD_EMBED_COLOR` (hex without `#`, default `2563eb`).
 
+## Top-questions log (Premium)
+
+Every question from the widget and the Discord bot is appended to a log: question text, answered yes/no, cited pages and time. **No IPs, user IDs or names are stored.** The report groups near-duplicate wordings and shows:
+- the most asked questions,
+- unanswered questions (documentation gaps the client should fill),
+- the most cited doc pages,
+- volume per channel and per day.
+
+**Keep the log across restarts:** Render's normal filesystem is wiped on every deploy and restart, so a plain service loses the log. Attach a Render persistent disk (check Render's docs and pricing; disks need a paid instance), mount it at e.g. `/var/data`, and set `DOCS_RAG_LOG=/var/data/questions.jsonl`. On a VPS, any normal folder works.
+
+**View the report:**
+1. Set `DOCS_RAG_ADMIN_TOKEN` to a long random string in the service's environment, and share it only with the client.
+2. Fetch it:
+   ```
+   curl -H "Authorization: Bearer YOUR_ADMIN_TOKEN" "https://YOUR-SERVICE.onrender.com/admin/questions?days=30"
+   ```
+   Without the right token, the endpoint answers 404.
+3. Or, where you have the log file: `python questions_report.py --days 30 --out report.md`
+
+Suggested Premium deliverable: send the client the 30-day report each month, with the "Not answered" table turned into a short list of docs pages to write.
+
 ## Settings reference
 
 | Variable | Default | Purpose |
@@ -91,6 +112,9 @@ Bot settings: `DISCORD_RATE_LIMIT` (questions per user per minute, default 5) an
 | `DOCS_RAG_MODEL` | Gemini fallback list | Models, comma-separated, tried in order |
 | `DOCS_RAG_TIMEOUT_MS` | 40000 | Per-request timeout before falling back |
 | `DOCS_RAG_REINDEX` | (off) | `1` forces a re-crawl even if an index exists |
+| `DOCS_RAG_LOG` | `logs/questions.jsonl` | Question log path (`off` disables logging) |
+| `DOCS_RAG_ADMIN_TOKEN` | (unset, endpoint off) | Enables `/admin/questions` |
+| `DISCORD_BOT_TOKEN` | (unset, bot off) | Runs the Discord bot in the same service |
 
 ## Troubleshooting
 

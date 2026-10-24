@@ -9,15 +9,18 @@ Embed on any site:
 """
 
 import os
+import secrets
 import time
 from collections import defaultdict, deque
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, PlainTextResponse
 from pydantic import BaseModel
 
+from qlog import log_question, read_log
+from questions_report import build_report
 from rag import Index, answer
 
 STATIC = Path(__file__).parent / "static"
@@ -27,6 +30,8 @@ PRODUCT = os.environ.get("DOCS_RAG_PRODUCT", INDEX.root)
 ALLOWED_ORIGINS = [o.strip() for o in os.environ.get("DOCS_RAG_ALLOWED_ORIGINS", "*").split(",") if o.strip()]
 # Questions per visitor IP per minute; every question costs LLM tokens.
 RATE_LIMIT = int(os.environ.get("DOCS_RAG_RATE_LIMIT", "10"))
+# Enables GET /admin/questions (top-questions report). Unset = endpoint disabled.
+ADMIN_TOKEN = os.environ.get("DOCS_RAG_ADMIN_TOKEN", "")
 
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=ALLOWED_ORIGINS, allow_methods=["POST"], allow_headers=["Content-Type"])
@@ -48,7 +53,10 @@ def ask(body: Ask, request: Request):
     if len(hits) >= RATE_LIMIT:
         raise HTTPException(429, "Too many questions. Please wait a minute.")
     hits.append(now)
-    return answer(INDEX, body.question[:2000])
+    question = body.question[:2000]
+    res = answer(INDEX, question)
+    log_question(question, res, "web")
+    return res
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -60,6 +68,17 @@ def home():
 @app.get("/health")
 def health():
     return {"ok": True, "chunks": len(INDEX.chunks)}
+
+
+@app.get("/admin/questions", response_class=PlainTextResponse)
+def questions_admin(authorization: str = Header(default=""), days: int | None = None):
+    """Top-questions report as Markdown. Disabled unless DOCS_RAG_ADMIN_TOKEN is set.
+
+    curl -H "Authorization: Bearer $TOKEN" https://YOUR-HOST/admin/questions?days=30
+    """
+    if not ADMIN_TOKEN or not secrets.compare_digest(authorization, f"Bearer {ADMIN_TOKEN}"):
+        raise HTTPException(404)  # don't reveal the endpoint exists
+    return build_report(read_log(), days)
 
 
 @app.get("/widget.js")

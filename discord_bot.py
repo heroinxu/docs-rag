@@ -22,6 +22,7 @@ from collections import defaultdict, deque
 import discord
 from discord import app_commands
 
+from qlog import log_question
 from rag import Index, answer, make_client
 
 COLOR = int(os.environ.get("DISCORD_EMBED_COLOR", "2563eb"), 16)
@@ -98,6 +99,7 @@ class DocsBot(discord.Client):
     async def respond(self, question):
         try:
             res = await asyncio.to_thread(answer, self.index, question[:2000], self.llm)
+            log_question(question, res, "discord")
         except Exception as e:  # never leave the user hanging on "thinking..."
             print(f"answer failed: {type(e).__name__}: {e}")
             res = {"answer": "Sorry, I couldn't answer right now. Please try again in a minute.", "citations": []}

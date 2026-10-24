@@ -4,3 +4,5 @@ __pycache__/
 .env
 indexes/
 report.md
+logs/
+questions-report.md
